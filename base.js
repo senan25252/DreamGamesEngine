@@ -1,4 +1,5 @@
 let drawObjects = []
+drawObjects.push(`<script src="base.js"></script>`);
 
 class GameObject{
     static allObjects = [];
@@ -8,9 +9,6 @@ class GameObject{
         drawObjects.push(`<img src="${this.sourceImage}" style="position: absolute;" id="${this.name}">`);
         this.drawAtTransform();
     }
-
-
-
 
     transform = {
         position: {
@@ -28,12 +26,10 @@ class GameObject{
     };
 
     drawAtTransform() {
-        console.log(document.getElementById(this.name));
-        console.log(drawObjects);
-        document.getElementById("view").innerHTML = drawObjects;
+        document.getElementById("view").innerHTML = drawObjects.join("");
         const obj = document.getElementById(this.name);
-        obj.style.top = `${this.transform.position.y - (obj.width / 2)}em` ;
-        obj.style.left = `${this.transform.position.x - (obj.height / 2)}em` ;
+        obj.style.top = `${-this.transform.position.y}px` ;
+        obj.style.left = `${this.transform.position.x}px` ;
         obj.width = this.transform.scale.x;
         obj.height = this.transform.scale.y;
     }
@@ -43,5 +39,27 @@ class GameObject{
 
 const obj = new GameObject("square.png", "deneme");
 obj.transform.position.x = 10;
-obj.transform.position.y = 10;
+obj.transform.position.y = 0;
 obj.drawAtTransform();
+
+
+document.addEventListener("keydown", function(event) {
+    if(event.key == "w") {
+        obj.transform.position.y += 5;
+        obj.drawAtTransform();
+    }
+    if(event.key == "s") {
+        obj.transform.position.y -= 5;
+        obj.drawAtTransform();
+    }
+    if(event.key == "d") {
+        obj.transform.position.x += 5;
+        obj.drawAtTransform();
+    }
+    if(event.key == "a") {
+        obj.transform.position.x -= 5;
+        obj.drawAtTransform();
+    }
+    console.log(`${obj.transform.position.y} ${obj.transform.position.x}`);
+})
+
