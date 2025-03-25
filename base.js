@@ -57,6 +57,26 @@ class GameObject {
         );
     }
     
+    getAllColliders() {
+        this.Others = [];
+        
+        GameObject.allObjects.forEach(value => {
+            if (value.name !== this.name) {
+                this.Others.push(value);
+            }
+        });
+    
+        this.output = [];
+    
+        this.Others.forEach(obj => {
+            if (GameObject.isCollidedWithObject(obj.name, this.name)) {
+                this.output.push(obj);
+            }
+        });
+    
+        return this.output;
+    }
+    
 
     createElement() {
         const img = document.createElement("img");
@@ -83,8 +103,13 @@ obj.transform.position.y = 0;
 obj.drawAtTransform();
 
 const obj2 = new GameObject("square.png", "deneme2", true);
-obj2.transform.position.x = 80;
-obj2.transform.position.y = 80;
+obj2.transform.position.x = 150;
+obj2.transform.position.y = 150;
+obj2.drawAtTransform();
+
+const obj3 = new GameObject("square.png", "deneme3", true);
+obj2.transform.position.x = 130;
+obj2.transform.position.y = 130;
 obj2.drawAtTransform();
 
 
@@ -112,17 +137,14 @@ document.addEventListener("keyup", function (event) {
 });
 
 function move() {
-    // 60 FPS güncelleme (16ms aralıklarla çalışır)
     setInterval(() => {
-        if (movingRight) obj.transform.position.x += 5; // Her 16ms'de bir 5px hareket
+        if (movingRight) obj.transform.position.x += 5;
         if (movingLeft) obj.transform.position.x -= 5;
         if (movingUp) obj.transform.position.y -= 5;
         if (movingDown) obj.transform.position.y += 5;
-
-        console.log(GameObject.isCollidedWithObject("deneme2", "deneme"));
     
         obj.drawAtTransform();
-    }, 16); // Yaklaşık 60 FPS
+    }, 16);
         
 }
 
