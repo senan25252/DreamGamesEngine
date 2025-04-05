@@ -1,6 +1,6 @@
 class GameObject {
     static allObjects = [];
-    constructor(source, name, isSolid) {
+    constructor(source, name, isSolid, hasGravity) {
         this.move();
         this.movingRight = false;
         this.movingLeft = false;
@@ -11,7 +11,12 @@ class GameObject {
         this.sourceImage = source;
         this.name = name;
         this.isSolid = isSolid;
+        this.hasGravity = hasGravity;
         this.createElement();
+        this.velocity = {
+            x: 0,
+            y: 0,
+        }
         this.transform = {
             position: { x: 10, y: 10 },
             rotation: { z: 0 },
@@ -24,6 +29,11 @@ class GameObject {
     physicLoop() {
         setInterval(() => {
             if (!this.isSolid) return;
+
+            if(this.hasGravity) {
+                this.transform.position.y += this.velocity.y;
+                this.velocity.y += 0.05;
+            }
         
             this.getAllColliders().forEach(obj => {
                 let objWidth = obj.obj.offsetWidth;
@@ -41,7 +51,7 @@ class GameObject {
                 this.thisBottomLine = this.transform.position.y + thisHeight;
                 this.thisTopLine = this.transform.position.y;
                 this.thisLeftLine = this.transform.position.x;
-        
+                
                 // Obyektin içində olduğunu yoxlayırıq
                 if (this.thisBottomLine > this.objTopLine && this.thisTopLine < this.objBottomLine &&
                     this.thisRightLine > this.objLeftLine && this.thisLeftLine < this.objRightLine) {
@@ -67,6 +77,7 @@ class GameObject {
                         }
                     } else {
                         if (overlapY1 < overlapY2) {
+                            this.velocity.y = 0;
                             console.log("Pushing Up");
                             this.transform.position.y -= minOverlapY;  // Yuxarı itələyirik
                         } else {
@@ -160,7 +171,7 @@ class GameObject {
     }
 }
 
-const obj = new GameObject("square.png", "deneme", true);
+const obj = new GameObject("square.png", "deneme", true, true);
 obj.transform.position.x = 10;
 obj.transform.position.y = 0;
 obj.drawAtTransform();
@@ -184,7 +195,6 @@ function getCurrentObjects() {
 }
 
 console.log(GameObject.FindWithName("deneme"));
-
 
 
 
