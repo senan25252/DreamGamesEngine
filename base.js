@@ -1,11 +1,13 @@
 class GameObject {
     static allObjects = [];
-    constructor(source, name, isSolid, hasGravity) {
+    constructor(source, name, isSolid, hasGravity, animations) {
         this.move();
         this.movingRight = false;
         this.movingLeft = false;
         this.movingUp = false;
         this.movingDown = false;
+
+        this.motions = animations;
 
         GameObject.allObjects.push(this);
         this.sourceImage = source;
@@ -24,6 +26,20 @@ class GameObject {
         };
         this.drawAtTransform();
         this.physicLoop();
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async playAnimation(index, timeout) {
+        console.log(this.motions, this.motions[index]);
+        console.log(index);
+    
+        for (const obj of this.motions[index].frames) {
+            this.obj.src = obj;
+            await this.delay(timeout);
+        }
     }
 
     physicLoop() {
@@ -52,37 +68,36 @@ class GameObject {
                 this.thisTopLine = this.transform.position.y;
                 this.thisLeftLine = this.transform.position.x;
                 
-                // Obyektin içində olduğunu yoxlayırıq
                 if (this.thisBottomLine > this.objTopLine && this.thisTopLine < this.objBottomLine &&
                     this.thisRightLine > this.objLeftLine && this.thisLeftLine < this.objRightLine) {
         
                     console.log("Collision detected!");
         
-                    let overlapX1 = this.thisRightLine - this.objLeftLine;  // Sağ tərəfdən girmə
-                    let overlapX2 = this.objRightLine - this.thisLeftLine;  // Sol tərəfdən girmə
-                    let overlapY1 = this.thisBottomLine - this.objTopLine;  // Aşağıdan girmə
-                    let overlapY2 = this.objBottomLine - this.thisTopLine;  // Yuxarıdan girmə
+                    let overlapX1 = this.thisRightLine - this.objLeftLine; 
+                    let overlapX2 = this.objRightLine - this.thisLeftLine;  
+                    let overlapY1 = this.thisBottomLine - this.objTopLine; 
+                    let overlapY2 = this.objBottomLine - this.thisTopLine;  
         
                     let minOverlapX = Math.min(overlapX1, overlapX2);
                     let minOverlapY = Math.min(overlapY1, overlapY2);
         
-                    // Ən kiçik üst-üstə düşməyə görə hansı istiqamətdə itələməli olduğumuzu müəyyən edirik
                     if (minOverlapX < minOverlapY) {
                         if (overlapX1 < overlapX2) {
                             console.log("Pushing Left");
-                            this.transform.position.x -= minOverlapX;  // Sola itələyirik
+                            this.transform.position.x -= minOverlapX;
                         } else {
                             console.log("Pushing Right");
-                            this.transform.position.x += minOverlapX;  // Sağa itələyirik
+                            this.transform.position.x += minOverlapX;
                         }
                     } else {
                         if (overlapY1 < overlapY2) {
+                            this.transform.position.y -= minOverlapY - (minOverlapY / 2);
                             this.velocity.y = 0;
                             console.log("Pushing Up");
-                            this.transform.position.y -= minOverlapY;  // Yuxarı itələyirik
+                            
                         } else {
                             console.log("Pushing Down");
-                            this.transform.position.y += minOverlapY;  // Aşağı itələyirik
+                            this.transform.position.y += minOverlapY;
                         }
                     }
                 }
@@ -91,6 +106,8 @@ class GameObject {
         
          
     }
+
+
 
     static FindWithName(name) {
         return typeof name === "string" ? this.allObjects.find(obj => obj.name === name) : null;
@@ -171,10 +188,24 @@ class GameObject {
     }
 }
 
-const obj = new GameObject("square.png", "deneme", true, true);
+
+class motion {
+    constructor(frames) {
+        this.frames = frames;
+    }
+}
+
+let anim = [new motion(["square.png", "squarered.jpg", "square.png"]), new motion(["squarered.jpg", "square.png", "squarered.jpg"])]
+
+const obj = new GameObject("square.png", "deneme", true, false, anim);
 obj.transform.position.x = 10;
 obj.transform.position.y = 0;
 obj.drawAtTransform();
+
+setInterval(() => {
+    obj.playAnimation(0, 1000);
+}, 3000);
+
 
 const obj2 = new GameObject("square.png", "deneme2", false);
 obj2.transform.position.x = 300;
