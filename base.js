@@ -197,7 +197,7 @@ class motion {
 
 let anim = [new motion(["square.png", "squarered.jpg", "square.png"]), new motion(["squarered.jpg", "square.png", "squarered.jpg"])]
 
-const obj = new GameObject("square.png", "deneme", true, false, anim);
+const obj = new GameObject("square.png", "deneme", true, true, anim);
 obj.transform.position.x = 10;
 obj.transform.position.y = 0;
 obj.drawAtTransform();
