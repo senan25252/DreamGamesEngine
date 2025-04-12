@@ -36,6 +36,13 @@ class GameObject {
         }
     }
 
+    jump() {
+        if(this.raycast({x: 0, y: 1}, this.obj.height / 2 + 1) != null) {
+            console.log("grounded");
+            this.velocity.y = -5;
+        }
+    }
+
     physicLoop() {
         setInterval(() => {
             if (!this.isSolid) return;
@@ -44,7 +51,7 @@ class GameObject {
             this.transform.position.x += this.velocity.x;
 
             if(this.hasGravity) {
-                this.velocity.y += 0.05;
+                this.velocity.y += 0.1;
             }
         
             this.getAllColliders().forEach(obj => {
@@ -158,7 +165,81 @@ class GameObject {
 
         
     }
+    
+    raycast(direction, length = 1000) {
+        const hits = [];
+    
+        const startX = this.transform.position.x + this.transform.scale.x / 2;
+        const startY = this.transform.position.y + this.transform.scale.y / 2;
+        const endX = startX + direction.x * length;
+        const endY = startY + direction.y * length;
+    
+        const rayLine = { x1: startX, y1: startY, x2: endX, y2: endY };
+    
+        for (const obj of GameObject.allObjects) {
+            if (obj.name === this.name) continue;
+    
+            const edges = this.getBoxEdges(obj);
+            for (const edge of edges) {
+                const intersection = this.lineIntersect(rayLine, edge);
+                if (intersection) {
+                    hits.push({
+                        object: obj,
+                        point: intersection
+                    });
+                }
+            }
+        }
+    
+        if (hits.length === 0) return null;
+    
+        hits.sort((a, b) => {
+            const distA = Math.hypot(a.point.x - startX, a.point.y - startY);
+            const distB = Math.hypot(b.point.x - startX, b.point.y - startY);
+            return distA - distB;
+        });
+    
+        return hits[0]; // En yakın nesne ve çarpışma noktası
+    }
 
+    getBoxEdges(obj) {
+        const x = obj.transform.position.x;
+        const y = obj.transform.position.y;
+        const w = obj.transform.scale.x;
+        const h = obj.transform.scale.y;
+    
+        return [
+            { x1: x, y1: y, x2: x + w, y2: y },           // top
+            { x1: x + w, y1: y, x2: x + w, y2: y + h },   // right
+            { x1: x + w, y1: y + h, x2: x, y2: y + h },   // bottom
+            { x1: x, y1: y + h, x2: x, y2: y }            // left
+        ];
+    }
+
+    lineIntersect(ray, edge) {
+        const { x1, y1, x2, y2 } = ray;
+        const { x1: x3, y1: y3, x2: x4, y2: y4 } = edge;
+    
+        const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if (denom === 0) return null;
+    
+        const px = ((x1*y2 - y1*x2)*(x3 - x4) - (x1 - x2)*(x3*y4 - y3*x4)) / denom;
+        const py = ((x1*y2 - y1*x2)*(y3 - y4) - (y1 - y2)*(x3*y4 - y3*x4)) / denom;
+    
+        // Kesişim noktası çizgi aralıklarında mı?
+        const onSegment = (x, y, xA, yA, xB, yB) =>
+            x >= Math.min(xA, xB) && x <= Math.max(xA, xB) &&
+            y >= Math.min(yA, yB) && y <= Math.max(yA, yB);
+    
+        if (
+            onSegment(px, py, x1, y1, x2, y2) &&
+            onSegment(px, py, x3, y3, x4, y4)
+        ) {
+            return { x: px, y: py };
+        }
+    
+        return null;
+    }
 }
 
 class Input {
@@ -213,16 +294,19 @@ class motion {
 
 let anim = [new motion(["square.png", "squarered.jpg", "square.png"]), new motion(["squarered.jpg", "square.png", "squarered.jpg"])]
 
-const obj = new GameObject("square.png", "deneme", true, false, anim);
+const obj = new GameObject("square.png", "deneme", true, true, anim);
 obj.transform.position.x = 10;
 obj.transform.position.y = 0;
 obj.drawAtTransform();
 
+const direction = { x: 0, y: 1 };
+
+
 Input.AddAxis(new Axis('A', 'D', "horizontal"));
 Input.AddAxis(new Axis('W', 'S', "vertical"));
 setInterval(() => {
-    obj.velocity.x = Input.GetAxis("horizontal") * 10;
-    obj.velocity.y = Input.GetAxis("vertical") * 10;
+    obj.transform.position.x += Input.GetAxis("horizontal") * 3;
+    obj.transform.position.y += Input.GetAxis("vertical") * 3;
 }, 16);
 
 
@@ -233,14 +317,15 @@ setInterval(() => {
 
 const obj2 = new GameObject("square.png", "deneme2", false);
 obj2.transform.position.x = 300;
-obj2.transform.position.y = 100;
+obj2.transform.position.y = 150;
 obj2.drawAtTransform();
 
 const obj3 = new GameObject("square.png", "deneme3", false);
-obj3.transform.position.x = 250;
+obj3.transform.position.x = 0;
 obj3.transform.position.y = 250;
 obj3.drawAtTransform();
 
+obj3.transform.scale.x = 1000;
 
 
 function getCurrentObjects() {
@@ -255,15 +340,5 @@ console.log(GameObject.FindWithName("deneme"));
 
 
 document.addEventListener("keydown", function (event) {
-    if (event.key === "d") obj.movingRight = true;
-    if (event.key === "a") obj.movingLeft = true;
-    if (event.key === "w") obj.movingUp = true;
-    if (event.key === "s") obj.movingDown = true;
-});
-
-document.addEventListener("keyup", function (event) {
-    if (event.key === "d") obj.movingRight = false;
-    if (event.key === "a") obj.movingLeft = false;
-    if (event.key === "w") obj.movingUp = false;
-    if (event.key === "s") obj.movingDown = false;
+    if (event.key === " ") obj.jump();
 });
