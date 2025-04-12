@@ -1,12 +1,6 @@
 class GameObject {
     static allObjects = [];
     constructor(source, name, isSolid, hasGravity, animations) {
-        this.move();
-        this.movingRight = false;
-        this.movingLeft = false;
-        this.movingUp = false;
-        this.movingDown = false;
-
         this.motions = animations;
 
         GameObject.allObjects.push(this);
@@ -46,8 +40,10 @@ class GameObject {
         setInterval(() => {
             if (!this.isSolid) return;
 
+            this.transform.position.y += this.velocity.y;
+            this.transform.position.x += this.velocity.x;
+
             if(this.hasGravity) {
-                this.transform.position.y += this.velocity.y;
                 this.velocity.y += 0.05;
             }
         
@@ -71,8 +67,6 @@ class GameObject {
                 if (this.thisBottomLine > this.objTopLine && this.thisTopLine < this.objBottomLine &&
                     this.thisRightLine > this.objLeftLine && this.thisLeftLine < this.objRightLine) {
         
-                    console.log("Collision detected!");
-        
                     let overlapX1 = this.thisRightLine - this.objLeftLine; 
                     let overlapX2 = this.objRightLine - this.thisLeftLine;  
                     let overlapY1 = this.thisBottomLine - this.objTopLine; 
@@ -83,20 +77,16 @@ class GameObject {
         
                     if (minOverlapX < minOverlapY) {
                         if (overlapX1 < overlapX2) {
-                            console.log("Pushing Left");
                             this.transform.position.x -= minOverlapX;
                         } else {
-                            console.log("Pushing Right");
                             this.transform.position.x += minOverlapX;
                         }
                     } else {
                         if (overlapY1 < overlapY2) {
                             this.transform.position.y -= minOverlapY - (minOverlapY / 2);
                             this.velocity.y = 0;
-                            console.log("Pushing Up");
                             
                         } else {
-                            console.log("Pushing Down");
                             this.transform.position.y += minOverlapY;
                         }
                     }
@@ -153,6 +143,10 @@ class GameObject {
         img.id = this.name;
         document.getElementById("view").appendChild(img);
         this.obj = img;
+        setInterval(() => {
+            this.drawAtTransform();
+            
+        }, 16);
     }
 
     drawAtTransform() {
@@ -161,30 +155,52 @@ class GameObject {
         this.obj.style.left = `${this.transform.position.x}px`;
         this.obj.width = this.transform.scale.x;
         this.obj.height = this.transform.scale.y;
+
+        
     }
 
+}
+
+class Input {
+    static axises = [];
+    static keys = {};
+
+    static AddAxis(axis) {
+        this.axises.push(axis);
+    }
+
+    static init() {
+        document.addEventListener('keydown', e => {
+            this.keys[e.key.toLowerCase()] = true;
+        });
+
+        document.addEventListener('keyup', e => {
+            this.keys[e.key.toLowerCase()] = false;
+        });
+    }
+
+    static GetAxis(name) {
+        const axis = this.axises.find(ax => ax.name.toLowerCase() === name.toLowerCase());
+        if (!axis) return 0;
+
+        if (this.keys[axis.posKey.toLowerCase()]) return 1;
+        if (this.keys[axis.negKey.toLowerCase()]) return -1;
+        return 0;
+    }
+}
 
 
-    move() {
-        
-        setInterval(() => {
+Input.init();
 
-            
-            if (this.movingDown) {
-                this.transform.position.y += 5;
-            }
-            if (this.movingRight) { 
-                this.transform.position.x += 5;
-            }
-            if (this.movingLeft) {
-                this.transform.position.x -= 5;
-            }
-            if (this.movingUp) {
-                this.transform.position.y -= 5;
-            }
-            this.drawAtTransform();
-            
-        }, 16);
+let horizontal = Input.GetAxis("Horizontal");
+console.log(horizontal);
+
+
+class Axis{
+    constructor(negKey, posKey, name) {
+        this.negKey = negKey;
+        this.posKey = posKey;
+        this.name = name;
     }
 }
 
@@ -197,10 +213,18 @@ class motion {
 
 let anim = [new motion(["square.png", "squarered.jpg", "square.png"]), new motion(["squarered.jpg", "square.png", "squarered.jpg"])]
 
-const obj = new GameObject("square.png", "deneme", true, true, anim);
+const obj = new GameObject("square.png", "deneme", true, false, anim);
 obj.transform.position.x = 10;
 obj.transform.position.y = 0;
 obj.drawAtTransform();
+
+Input.AddAxis(new Axis('A', 'D', "horizontal"));
+Input.AddAxis(new Axis('W', 'S', "vertical"));
+setInterval(() => {
+    obj.velocity.x = Input.GetAxis("horizontal") * 10;
+    obj.velocity.y = Input.GetAxis("vertical") * 10;
+}, 16);
+
 
 setInterval(() => {
     obj.playAnimation(0, 1000);
